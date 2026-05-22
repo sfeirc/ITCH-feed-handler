@@ -51,8 +51,7 @@ jobs:
             src/itch/parser.cpp \
             src/itch/order_book.cpp \
             src/net/pcap_replay.cpp \
-            src/net/xdp_socket.cpp \
-            -- -std=c++20 -Iinclude
+            src/net/xdp_socket.cpp
 
       - name: Benchmark smoke test
         # Use 1x (1 iteration each) for CI speed. The Iterations(10M) registration
@@ -109,8 +108,7 @@ jobs:
           # Quick run — sanitizers are slow, don't need full MinTime
           ./build-debug/bm_itch \
             --benchmark_filter="BM_BookUpdate_Add|BM_BookUpdate_Cancel" \
-            --benchmark_min_time=0.01s \
-            --benchmark_min_warmup_time=0.0
+            --benchmark_min_time=0.01s
 
   # ---------------------------------------------------------------------------
   # GCC cross-check
