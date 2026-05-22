@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Primary build: Release + clang-tidy + benchmark smoke test
+  # ---------------------------------------------------------------------------
+  build-and-test:
+    name: Build & Lint (ubuntu-22.04, clang-16)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            clang-16 \
+            clang-tidy-16 \
+            libbpf-dev \
+            libgoogle-benchmark-dev \
+            cmake \
+            ninja-build \
+            pkg-config
+
+          # Make clang-16 the default
+          sudo update-alternatives --install /usr/bin/clang++   clang++   /usr/bin/clang++-16   100
+          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-16 100
+
+      - name: Configure (Release)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DENABLE_XDP=OFF
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: clang-tidy
+        run: |
+          clang-tidy \
+            -p build \
+            src/itch/parser.cpp \
+            src/itch/order_book.cpp \
+            src/net/pcap_replay.cpp \
+            src/net/xdp_socket.cpp \
+            -- -std=c++20 -Iinclude
+
+      - name: Benchmark smoke test
+        # Use 1x (1 iteration each) for CI speed. The Iterations(10M) registration
+        # is for production profiling runs; --benchmark_min_time=<N>x overrides it in CI.
+        run: |
+          ./build/bm_itch \
+            --benchmark_min_time=1x \
+            --benchmark_out=bm_results.json \
+            --benchmark_out_format=json
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: bm_results.json
+
+  # ---------------------------------------------------------------------------
+  # Debug build: AddressSanitizer + UndefinedBehaviorSanitizer
+  # ---------------------------------------------------------------------------
+  asan-ubsan:
+    name: ASan + UBSan (ubuntu-22.04, clang-16)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            clang-16 \
+            libgoogle-benchmark-dev \
+            cmake \
+            ninja-build
+
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
+
+      - name: Configure (Debug with sanitizers)
+        run: |
+          cmake -B build-debug -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DENABLE_XDP=OFF
+
+      - name: Build (Debug)
+        run: cmake --build build-debug --parallel
+
+      - name: Run benchmark under sanitizers
+        env:
+          ASAN_OPTIONS: halt_on_error=1:detect_leaks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          # Quick run — sanitizers are slow, don't need full MinTime
+          ./build-debug/bm_itch \
+            --benchmark_filter="BM_BookUpdate_Add|BM_BookUpdate_Cancel" \
+            --benchmark_min_time=0.01s \
+            --benchmark_min_warmup_time=0.0
+
+  # ---------------------------------------------------------------------------
+  # GCC cross-check
+  # ---------------------------------------------------------------------------
+  gcc-build:
+    name: Build (ubuntu-22.04, GCC-12)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y g++-12 libgoogle-benchmark-dev cmake ninja-build
+
+      - name: Configure
+        run: |
+          cmake -B build-gcc -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++-12 \
+            -DENABLE_XDP=OFF
+
+      - name: Build
+        run: cmake --build build-gcc --parallel

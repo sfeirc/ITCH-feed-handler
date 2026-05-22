@@ -1,0 +1,55 @@
+---
+# clang-tidy configuration for itch_feed_handler
+# Run: clang-tidy -p build src/**/*.cpp include/**/*.hpp
+
+Checks: >
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -misc-non-private-member-variables-in-classes
+
+WarningsAsErrors: >
+  bugprone-use-after-move,
+  bugprone-undefined-memory-manipulation,
+  performance-move-const-arg,
+  modernize-use-nullptr,
+  modernize-use-override
+
+HeaderFilterRegex: 'include/.*'
+
+CheckOptions:
+  - key:   readability-function-cognitive-complexity.Threshold
+    value: '25'
+  - key:   readability-function-size.LineThreshold
+    value: '80'
+  - key:   readability-identifier-naming.ClassCase
+    value: 'CamelCase'
+  - key:   readability-identifier-naming.FunctionCase
+    value: 'lower_case'
+  - key:   readability-identifier-naming.MemberCase
+    value: 'lower_case'
+  - key:   readability-identifier-naming.MemberSuffix
+    value: '_'
+  - key:   readability-identifier-naming.NamespaceCase
+    value: 'lower_case'
+  - key:   readability-identifier-naming.VariableCase
+    value: 'lower_case'
+  - key:   performance-unnecessary-copy-initialization.AllowedTypes
+    value: ''
+  - key:   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: '1'
+...
