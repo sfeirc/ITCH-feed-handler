@@ -144,6 +144,7 @@ if(BENCHMARK_AVAILABLE)
 
     target_compile_options(bm_itch PRIVATE
         $<$<CONFIG:Release>:-march=native -O3>
+        -Wno-conversion   # char/int literals assigned to uint8_t in corpus builder
     )
 endif()
 
