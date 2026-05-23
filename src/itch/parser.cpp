@@ -16,29 +16,31 @@ const std::array<Parser::DispatchFn, 256> Parser::kDispatchTable = []() {
     for (auto& fn : tbl) fn = handle_unknown;
 
     // ITCH 5.0 message type assignments
-    tbl['S'] = handle_system_event;           // System Event
-    tbl['R'] = handle_stock_directory;        // Stock Directory
-    tbl['H'] = handle_stock_trading_action;   // Stock Trading Action
-    tbl['Y'] = handle_reg_sho;                // Reg SHO Short Sale Price Test
-    tbl['L'] = handle_market_participant;     // Market Participant Position
-    tbl['V'] = handle_mwcb_decline_level;     // MWCB Decline Level
-    tbl['W'] = handle_mwcb_status;            // MWCB Status
-    tbl['K'] = handle_ipo_quoting;            // IPO Quoting Period Update
-    tbl['J'] = handle_luld_auction_collar;    // LULD Auction Collar
-    tbl['h'] = handle_operational_halt;       // Operational Halt
-    tbl['A'] = handle_add_order;              // Add Order (no MPID)
-    tbl['F'] = handle_add_order_mpid;         // Add Order (with MPID)
-    tbl['E'] = handle_order_executed;         // Order Executed
-    tbl['C'] = handle_order_executed_price;   // Order Executed With Price
-    tbl['X'] = handle_order_cancel;           // Order Cancel
-    tbl['D'] = handle_order_delete;           // Order Delete
-    tbl['U'] = handle_order_replace;          // Order Replace
-    tbl['P'] = handle_trade;                  // Trade (non-cross)
-    tbl['Q'] = handle_cross_trade;            // Cross Trade
-    tbl['B'] = handle_broken_trade;           // Broken Trade
-    tbl['I'] = handle_ipo_allocation;         // NOII / IPO Allocation
-    tbl['N'] = handle_retail_interest;        // Retail Interest
-    tbl['O'] = handle_direct_listing;         // Direct Listing with Capital
+    // Cast char literals to uint8_t to avoid signed-to-unsigned conversion
+    // warnings under clang's -Wsign-conversion (implied by -Wconversion).
+    tbl[static_cast<uint8_t>('S')] = handle_system_event;           // System Event
+    tbl[static_cast<uint8_t>('R')] = handle_stock_directory;        // Stock Directory
+    tbl[static_cast<uint8_t>('H')] = handle_stock_trading_action;   // Stock Trading Action
+    tbl[static_cast<uint8_t>('Y')] = handle_reg_sho;                // Reg SHO Short Sale Price Test
+    tbl[static_cast<uint8_t>('L')] = handle_market_participant;     // Market Participant Position
+    tbl[static_cast<uint8_t>('V')] = handle_mwcb_decline_level;     // MWCB Decline Level
+    tbl[static_cast<uint8_t>('W')] = handle_mwcb_status;            // MWCB Status
+    tbl[static_cast<uint8_t>('K')] = handle_ipo_quoting;            // IPO Quoting Period Update
+    tbl[static_cast<uint8_t>('J')] = handle_luld_auction_collar;    // LULD Auction Collar
+    tbl[static_cast<uint8_t>('h')] = handle_operational_halt;       // Operational Halt
+    tbl[static_cast<uint8_t>('A')] = handle_add_order;              // Add Order (no MPID)
+    tbl[static_cast<uint8_t>('F')] = handle_add_order_mpid;         // Add Order (with MPID)
+    tbl[static_cast<uint8_t>('E')] = handle_order_executed;         // Order Executed
+    tbl[static_cast<uint8_t>('C')] = handle_order_executed_price;   // Order Executed With Price
+    tbl[static_cast<uint8_t>('X')] = handle_order_cancel;           // Order Cancel
+    tbl[static_cast<uint8_t>('D')] = handle_order_delete;           // Order Delete
+    tbl[static_cast<uint8_t>('U')] = handle_order_replace;          // Order Replace
+    tbl[static_cast<uint8_t>('P')] = handle_trade;                  // Trade (non-cross)
+    tbl[static_cast<uint8_t>('Q')] = handle_cross_trade;            // Cross Trade
+    tbl[static_cast<uint8_t>('B')] = handle_broken_trade;           // Broken Trade
+    tbl[static_cast<uint8_t>('I')] = handle_ipo_allocation;         // NOII / IPO Allocation
+    tbl[static_cast<uint8_t>('N')] = handle_retail_interest;        // Retail Interest
+    tbl[static_cast<uint8_t>('O')] = handle_direct_listing;         // Direct Listing with Capital
 
     return tbl;
 }();
