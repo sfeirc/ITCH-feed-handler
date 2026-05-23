@@ -28,6 +28,7 @@ OrderBook::OrderBook() {
 
 size_t OrderBook::find_order(uint64_t ref) const noexcept {
     const size_t start = probe_start(ref);
+#ifdef __AVX2__
     const __m256i vref   = _mm256_set1_epi64x(static_cast<int64_t>(ref));
     const __m256i empty4 = _mm256_set1_epi64x(static_cast<int64_t>(ORDER_EMPTY));
 
@@ -51,7 +52,7 @@ size_t OrderBook::find_order(uint64_t ref) const noexcept {
         const int empty_mask = _mm256_movemask_epi8(empty);
 
         if (__builtin_expect(hit_mask != 0, 0)) {
-            const int lane = __builtin_ctz(static_cast<unsigned>(hit_mask)) / 8;
+            const size_t lane = static_cast<size_t>(__builtin_ctz(static_cast<unsigned>(hit_mask))) / 8u;
             const size_t slots_arr[4] = {s0, s1, s2, s3};
             return slots_arr[lane];
         }
@@ -59,6 +60,14 @@ size_t OrderBook::find_order(uint64_t ref) const noexcept {
         // All four were tombstones or other refs — continue
     }
     return ORDER_MAP_CAP;  // not found after full scan
+#else
+    for (size_t i = 0; i < ORDER_MAP_CAP; ++i) {
+        const size_t slot = (start + i * (i + 1) / 2) & ORDER_MAP_MASK;
+        if (order_refs[slot] == ref) return slot;
+        if (order_refs[slot] == ORDER_EMPTY) return ORDER_MAP_CAP;
+    }
+    return ORDER_MAP_CAP;
+#endif
 }
 
 void OrderBook::insert_order(const OrderEntry& entry) noexcept {

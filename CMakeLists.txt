@@ -122,6 +122,7 @@ target_include_directories(itch_lib PUBLIC include)
 
 target_compile_options(itch_lib PRIVATE
     $<$<CONFIG:Release>:-march=native -O3>
+    -mavx2
 )
 
 if(XDP_LINK_LIBS)

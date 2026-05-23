@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cassert>
 #include <algorithm>
-#include <immintrin.h>
 #include <cstring>
 
 namespace itch {
@@ -47,29 +46,6 @@ static constexpr size_t MAX_LEVELS = 1024;
 /// Real Nasdaq data: ~3000-8000 live orders per busy symbol at peak.
 static constexpr size_t ORDER_MAP_CAP  = 1u << 17;  // 131072
 static constexpr size_t ORDER_MAP_MASK = ORDER_MAP_CAP - 1;
-
-/// SIMD level-find: returns index of price in prices[0..count), or count if not found.
-/// Uses AVX2 to compare 4 prices (uint64_t) per iteration.
-[[gnu::always_inline]]
-static inline uint32_t find_level_simd(const uint64_t* __restrict__ prices,
-                                        uint32_t count,
-                                        uint64_t target) noexcept {
-    const __m256i vt = _mm256_set1_epi64x(static_cast<int64_t>(target));
-    uint32_t i = 0;
-    for (; i + 4 <= count; i += 4) {
-        __m256i vp = _mm256_loadu_si256(
-            reinterpret_cast<const __m256i*>(prices + i));
-        __m256i eq = _mm256_cmpeq_epi64(vp, vt);
-        int mask = _mm256_movemask_epi8(eq);
-        if (__builtin_expect(mask != 0, 0)) {
-            // Each matching lane sets 8 consecutive bits; ctz/8 gives lane index
-            return i + static_cast<uint32_t>(__builtin_ctz(static_cast<unsigned>(mask))) / 8;
-        }
-    }
-    for (; i < count; ++i)
-        if (prices[i] == target) return i;
-    return count;
-}
 
 /// Order book for a single instrument.
 ///
