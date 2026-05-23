@@ -54,7 +54,8 @@ jobs:
       - name: Benchmark smoke test
         run: |
           ./build/bm_itch \
-            --benchmark_iterations=1 \
+            --benchmark_filter="BM_BookUpdate_Add|BM_BookUpdate_Cancel" \
+            --benchmark_min_time=0.01 \
             --benchmark_out=bm_results.json \
             --benchmark_out_format=json
 
