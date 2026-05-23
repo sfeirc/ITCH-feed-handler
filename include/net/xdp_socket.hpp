@@ -60,11 +60,15 @@ private:
     // ---- XDP path ----
     // When AF_XDP is available these hold the umem/ring state.
     // Defined as void* to keep this header free of libbpf types.
+    // Guard with HAVE_LIBBPF so clang does not warn about unused private fields
+    // when the library is not linked (-Wunused-private-field is an error here).
+#ifdef HAVE_LIBBPF
     void* xsk_umem_   = nullptr;  // struct xsk_umem*
     void* xsk_socket_ = nullptr;  // struct xsk_socket*
-    void* umem_buf_   = nullptr;  // mmap region
     void* fill_ring_  = nullptr;  // struct xsk_ring_prod*
     void* rx_ring_    = nullptr;  // struct xsk_ring_cons*
+#endif
+    void* umem_buf_   = nullptr;  // mmap region (used by both XDP and fallback paths)
 
     // ---- Fallback path ----
     // Pre-allocated mmsghdr array for recvmmsg

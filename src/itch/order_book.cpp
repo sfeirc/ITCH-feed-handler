@@ -142,21 +142,6 @@ uint32_t ask_level_lower_bound(const Level* __restrict__ lvl,
     return lo;
 }
 
-// Fast vectorized copy of prices from Level[].price into flat uint64_t prices[].
-// Called ONLY when bid_prices[] needs to be rebuilt after a bids[] memmove,
-// to maintain the debug assert (bid_prices[0] == bids[0].price).
-// For release builds (NDEBUG) this is a no-op.
-[[gnu::always_inline]] static inline
-void sync_bid_prices([[maybe_unused]] const Level* __restrict__ lvl,
-                      [[maybe_unused]] uint64_t* __restrict__ prices,
-                      [[maybe_unused]] uint32_t pos,
-                      [[maybe_unused]] uint32_t count) noexcept {
-#ifndef NDEBUG
-    // Only keep index 0 in sync for the debug assert in update_bbo
-    if (pos == 0 && count > 0) prices[0] = lvl[0].price;
-#endif
-}
-
 void OrderBook::add_to_level(uint64_t price, uint32_t qty, uint8_t side) noexcept {
     if (side == 'B') {
         assert(bid_count < MAX_LEVELS && "Bid level array full");
